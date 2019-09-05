@@ -2,26 +2,34 @@
 
 	//const表示申明的变量是不可变的，ES6
 	const items = [{
-			id: 1, //主鍵id
-			content: 'vue.js', //輸入內容
-			completed: false //是否完成
-		},
-		{
-			id: 2, //主鍵id
-			content: 'java', //輸入內容
-			completed: false //是否完成
-		},
-		{
-			id: 3, //主鍵id
-			content: 'python', //輸入內容
-			completed: false //是否完成
-		}
+		id: 1, //主鍵id
+		content: 'vue.js', //輸入內容
+		completed: false //是否完成
+	},
+	{
+		id: 2, //主鍵id
+		content: 'java', //輸入內容
+		completed: false //是否完成
+	},
+	{
+		id: 3, //主鍵id
+		content: 'python', //輸入內容
+		completed: false //是否完成
+	}
 	]
-
+	//注册全局指令
+	//指令名不要机上v-,在引用这个指令时才需要加上 v-
+	Vue.directive('app-focus',{
+		inserted(el,binding){
+			//聚焦元素
+			el.focus();
+		}
+	})
 	new Vue({
 		el: '#todoapp',
 		data: {
-			items //这是对象属性的简写方式，等价于items=items
+			items,//这是对象属性的简写方式，等价于items=items
+			currentItem: null //代表的是点击的那个任务项
 		},
 		//计算属性
 		computed: {
@@ -53,13 +61,41 @@
 		},
 		//定义函数
 		methods: {
+			//完成编辑，保存数据
+			finishEdit(item, index, event) {
+				//1.获取当前输入框的值
+				const content = event.target.value.trim()
+				//2.判断 输入框的值是否为空，如果为空，则进行删除任务项
+				if (!content) {
+					//如果为空，则进行删除任务项
+					//复用了下面的函数进行移除
+					this.removeItem(index)
+					return
+				}
+				//3.如果不为空，则添加到任务项,其实是做一个更新
+				item.content = content
+				//4.移除 .editing样式，退出编辑状态
+				this.currentItem = null
+			},
+			//取消编辑
+			cancelEdit() {
+				// 当this.currentItem 值为空时，editing:item===currentItem 
+				//中的item===currentItem始终为false,所有会将editing移除
+				this.currentItem = null
+			},
+			//进入编辑状态
+			toEdit(item) {
+				console.log(item)
+				//将点击的那个任务项item,赋值给currentItem,用于页面.editing样式生效
+				this.currentItem = item
+			},
 			//移除所有已完成 任务项
 			removeCompleted() {
 				//过滤出所有未完成任务项，重新的将这个新数组(未完成任务项)
 				// this.items.filter(item => {
 				// 	return  !item.completed
 				// })
-				this.items= this.items.filter(item => !item.completed)
+				this.items = this.items.filter(item => !item.completed)
 			},
 			//移除任务项
 			removeItem(index) {
@@ -86,5 +122,7 @@
 				event.target.value = ''
 			}
 		}
+
+
 	})
 })(Vue);
