@@ -19,20 +19,67 @@
 	]
 	//注册全局指令
 	//指令名不要机上v-,在引用这个指令时才需要加上 v-
-	Vue.directive('app-focus',{
-		inserted(el,binding){
+	Vue.directive('app-focus', {
+		inserted(el, binding) {
 			//聚焦元素
 			el.focus();
 		}
 	})
-	new Vue({
+	var app = new Vue({
 		el: '#todoapp',
 		data: {
 			items,//这是对象属性的简写方式，等价于items=items
-			currentItem: null //代表的是点击的那个任务项
+			currentItem: null, //代表的是点击的那个任务项
+			filterStatus: 'all'//接收变化的状态值
+		},
+		//定义监听器
+		watch:{
+			//当对象中的某个属性发生改变之后，more清空下不会被监听到
+			//如果你希望修改对象属性之后，需要被监听到?
+			// items:function(newValue,old){
+			// 	console.log("watch",newValue)
+			// }
+			//深度监听，当对象中的属性值发生变化后，使用deep:true选择则可以实现监听
+			items:{
+				deep:true,
+				handler:function(newItems,oldItems){
+					
+				}
+			}
+		},
+		//自定义局部指令
+		directives: {
+			'todo-focus': {//注意指令名称
+				update(el, binding) {
+					//只有双击的那个元素，才会获取焦点
+					if (binding.value) {
+						el.focus();
+					}
+				}
+			}
 		},
 		//计算属性
 		computed: {
+			//根据不同状态过滤出不同数据
+			filterItems() {
+				//当上面filterStatus状态发生变化时，则过滤出不同的数据
+				//判断filterStatus状态值
+				switch (this.filterStatus) {
+					case 'active':
+						//过滤出未完成的数据
+						return this.items.filter(item => !item.completed)
+						break;
+					case 'completed':
+						//过滤出所有已完成的数据
+						return	this.items.filter(item => item.completed)
+						break;
+					default:
+						//当上面都不满足是，则返回所有数据
+						return this.items
+						break;
+				}
+
+			},
 			//剩余未完成任务数量
 			remaining() {
 				//数组filter函数过滤所有未完成的任务项
@@ -125,4 +172,16 @@
 
 
 	})
+	//要写Vue实例外面
+	//当路由hash值发生变化之后，会自动调用该函数
+	window.onhashchange = function () {
+		console.log("hash值改变了", window.location.hash)
+		//获取路由的hash,当截取的hash值不为空时则返回，为空则返回all
+		const hash = window.location.hash.substr(2) || 'all'
+		//状态一旦改变，就会将hash值赋值给filterStatus
+		//定义一个计算属性filterItems来感知filterStatus的变化，当它变化之后，来过滤出不同数据
+		app.filterStatus = hash
+	}
+	//第一次访问页面时，就调用一次让状态值生效
+	window.onhashchange()
 })(Vue);
